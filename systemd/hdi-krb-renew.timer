@@ -1,0 +1,11 @@
+[Unit]
+Description=Renew the HDI Kerberos ticket every 2 hours
+
+[Timer]
+OnCalendar=*-*-* 00/2:00:00
+RandomizedDelaySec=5min
+# run at once after sleep or boot if a slot was missed
+Persistent=true
+
+[Install]
+WantedBy=timers.target

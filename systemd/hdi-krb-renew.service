@@ -1,0 +1,6 @@
+[Unit]
+Description=Renew the HDI Kerberos ticket (no password; skips if it cannot)
+
+[Service]
+Type=oneshot
+ExecStart=%h/work/hdi-kerberos/kinit-hdi.sh --renew-only

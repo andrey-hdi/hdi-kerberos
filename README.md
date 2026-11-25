@@ -9,6 +9,7 @@ VPN and `krb5-workstation` (Fedora).
 | `krb5-hdi.conf` | Realm `HDI.CO.AT`; maps `hdi.at` hosts to it. KDCs come from DNS. |
 | `env.sh` | `. env.sh` sets `KRB5_CONFIG` to that file plus `/etc/krb5.conf`. |
 | `kinit-hdi.sh` | Renews the ticket, or gets a new one with your VPN login. |
+| `systemd/` | User timer that renews the ticket every 2 hours. |
 | `azdo.sh` | `curl --negotiate` against `https://devops.hdi.at/HdiCollection/`. |
 
 ## Use
@@ -24,6 +25,22 @@ goes to stdout; any other prints `HTTP <code>: <message>` to stderr and exits 1,
 so `| jq` never sees an error page. Set `HDI_UPN` to
 skip the argument to `kinit-hdi.sh`. For plain `klist`/`kvno`/`curl`, source
 `env.sh` first.
+
+## Automatic renewal
+
+A ticket renews only while it is still valid, so something must run before
+each 10-hour expiry. `systemd/` has a user timer that runs
+`kinit-hdi.sh --renew-only` every 2 hours (and at once after sleep or boot if a
+slot was missed). It never prompts: with no ticket, past the 7-day limit or
+with the VPN down it logs a line and skips, and the next `kinit-hdi.sh` asks for
+the password.
+
+```sh
+mkdir -p ~/.config/systemd/user
+ln -sf ~/work/hdi-kerberos/systemd/hdi-krb-renew.* ~/.config/systemd/user/
+systemctl --user daemon-reload && systemctl --user enable --now hdi-krb-renew.timer
+journalctl --user -u hdi-krb-renew.service -n 5     # what the last runs did
+```
 
 ## How it works
 
